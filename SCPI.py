@@ -46,23 +46,8 @@ def scpi():
     print(get_id())
     header = get_header()
 
-#plt.figure(1)
-#plt.ion()
-#plt.show()
-#plt.grid()
-#i=0
-#while (i<200):
-#    i=i+1
-#    print("plot...",i)
     data = get_data(1)
 #save_data('Osci.dat',data)
-#    plt.figure(1)
-#    plt.clf()
-#    plt.plot(data, 'y')
-#    plt.draw()
-#    plt.pause(0.001)
-#    plotFFT(data)
     dev.reset()
     return data
-#dev.reset()
 
