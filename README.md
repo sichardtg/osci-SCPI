@@ -14,3 +14,11 @@ Basic SCPI part started from a software (under MIT license) by Stephen Goadhouse
 start with python3, e.g.:
 
 python3 main.py
+
+## todos
+
+* more channels
+* display current settings of the device
+* controls (change settings)
+* data export (plot, data)
+* ...
