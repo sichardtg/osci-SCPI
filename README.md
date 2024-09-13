@@ -5,9 +5,12 @@ Basic SCPI part started from a software (under MIT license) by Stephen Goadhouse
 
 ## dependencies
 * python3
-* python3-pil.imagetk
+* tkinter
+* (python3-pil.imagetk)
 * pyusb
 * matplotlib
+* numpy
+* threading
 
 ## running
 
