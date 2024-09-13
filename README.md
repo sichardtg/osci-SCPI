@@ -17,6 +17,7 @@ python3 main.py
 
 ## todos
 
+* readout scales and adapt plot axes
 * more channels
 * display current settings of the device
 * controls (change settings)
