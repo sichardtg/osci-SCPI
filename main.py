@@ -36,6 +36,8 @@ def plotLive(hordata,data,fig):
     p=fig.add_axes([0.1, 0.1, 0.8, 0.8])
     p.set_title("Live")
     p.plot(hordata,data)
+    p.set_xlabel("s")
+    p.set_ylabel("V")
     p.grid()
 
 def plots():
