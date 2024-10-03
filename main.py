@@ -49,7 +49,7 @@ def plots():
             plotLive(x,data, liveFigure)
             livecanvas.draw()
 
-            plotFFT(data, fftFigure)
+            plotFFT(data, fftFigure, xscal=scal)
             canvas.draw()
 
 plotthread= Thread(target=plots)
