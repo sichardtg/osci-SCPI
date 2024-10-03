@@ -15,7 +15,7 @@ def send(cmd):
     # address taken from results of print(dev):   ENDPOINT 0x3: Bulk OUT
     dev.write(0x1,cmd)
     # address taken from results of print(dev):   ENDPOINT 0x81: Bulk IN
-    result = (dev.read(0x81,100000,1000)) #addr, len, timeout
+    result = (dev.read(0x81,100000,10000)) #addr, len, timeout
     return result
 
 def get_id():
@@ -41,13 +41,45 @@ def save_data(ffname,data):
     f = open(ffname,'w')
     f.write('\n'.join(map(str, data)))
     f.close()
+def calcScalPrefactor(letter):
+    
+    match letter:
+        case 'n':
+            return 1e-9
+        case 'u':
+            return 1e-6
+        case 'm':
+            return 1e-3
+        case _:
+            return 1
+    
+
+def getHorScaling():
+    dev.reset()
+    res=send(':HORizontal:SCALe?')
+    scalStr=res.tobytes().decode('utf-8')
+    unit=calcScalPrefactor(scalStr[-3])
+    if(unit==1):
+        scal=float(scalStr[:-2])
+    else:
+        scal=float(scalStr[:-3])*unit
+    print("scal... ", scal, "unit...", unit)#, scal2, scal3, scal4)
+    return scal, scalStr
+
+def getVertScaling(channel=1):
+    print(send(":CH"+str(channel)+":SCALe"))
+    return 1
+
+def getScalings():
+    return getHorScaling()#, getVertScaling()
 
 def scpi():
+    dev.reset()
     print(get_id())
     header = get_header()
 
     data = get_data(1)
 #save_data('Osci.dat',data)
-    dev.reset()
+    #dev.reset()
     return data
 

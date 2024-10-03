@@ -6,6 +6,8 @@ NavigationToolbar2Tk)
 from fftplot import plotFFT
 from threading import Thread, currentThread
 
+import numpy as np
+
 
 window= Tk()
 
@@ -29,20 +31,22 @@ livecanvas.get_tk_widget().pack()
 
 
 
-def plotLive(data,fig):
+def plotLive(hordata,data,fig):
     fig.clf()
     p=fig.add_axes([0.1, 0.1, 0.8, 0.8])
     p.set_title("Live")
-    p.plot(data)
+    p.plot(hordata,data)
     p.grid()
 
 def plots():
     while(1):
+        #getScalings()
         t=currentThread()
         if(getattr(t,"do_run", True)):
             data=scpi()
 #    [1,2,2,121,21,21,21,51,234,51,51,2,21,51,51]
-            plotLive(data, liveFigure)
+            x=np.multiply(list(range(len(data))),scal*12/len(data))
+            plotLive(x,data, liveFigure)
             livecanvas.draw()
 
             plotFFT(data, fftFigure)
@@ -64,5 +68,12 @@ on_button.pack()
 off_button=Button (master=window, text="Stop", command=stopplotthread)
 off_button.pack()
 
+print("scalings....")
+
+import time
+#while (True):
+scal,scalStr=getScalings()
+#    time.sleep(1)
 
 window.mainloop()
+
