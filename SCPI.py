@@ -67,11 +67,37 @@ def getHorScaling():
     return scal, scalStr
 
 def getVertScaling(channel=1):
-    print(send(":CH"+str(channel)+":SCALe"))
-    return 1
+    dev.reset()
+    try:
+        scalV=send(':CH1:SCALe?')
+        scalV=scalV.tobytes().decode('utf-8')
+
+        print("vert Scale = ",scalV)
+        vunit=calcScalPrefactor(scalV[-3])
+        
+        if(vunit==1):
+            vperdiv=float(scalV[:-2])
+        else:
+            vperdiv=float(scalV[:-3])*vunit
+
+    except:
+        print("error reading vert scale.")
+        vperdiv=1
+    return vperdiv
 
 def getScalings():
-    return getHorScaling()#, getVertScaling()
+    return [getHorScaling(), getVertScaling()]
+
+def getOffset():
+    try:
+        res=send(':CH1:OFFSet?')
+        off=res.tobytes().decode('utf-8')
+        print(off)
+        Voff=float(off)*getVertScaling()
+    except:
+        Voff=0
+    return Voff
+
 
 def scpi():
     dev.reset()
