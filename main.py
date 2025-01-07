@@ -63,18 +63,25 @@ plotthread= Thread(target=plots)
 plotthread.do_run=False
 plotthread.start()
 def startplotthread():
-    plotthread.do_run=True
-
+    try:
+        scal=getScalings()
+        verOff=getOffset()    
+        plotthread.do_run=True
+    except:
+        print("error at on button action.")
+    
 
 def stopplotthread():
     plotthread.do_run=False
+
 
 def sendSCPI():
     try:
         res=send(SCPIinput.get())
         print(res.tobytes().decode('utf-8'))
+        SCPIresultText.set(res.tobytes().decode('utf-8'))
     except:
-        print("send failed: ",SCPIinput.get()) 
+        print("SCPI send failed: ",SCPIinput.get()) 
 
     SCPIinput.delete(0,'end')
 
@@ -83,10 +90,16 @@ on_button.grid(column=1,row=0)
 off_button=Button (master=window, text="Stop", command=stopplotthread)
 off_button.grid(column=2,row=0)
 
-SCPIinput=Entry(master=window)
-SCPIinput.grid(column=2,row=2)
-sendbutton=Button(master=window, text="send", command=sendSCPI)
-sendbutton.grid(column=3,row=2)
+SCPIframe = LabelFrame(window, text="SCPI")
+SCPIframe.grid(column=2,row=2)
+
+SCPIinput=Entry(master=SCPIframe)
+SCPIinput.grid(column=1,row=1)
+sendbutton=Button(master=SCPIframe, text="send command", command=sendSCPI)
+sendbutton.grid(column=2,row=1)
+SCPIresultText=StringVar()
+SCPIresultLabel = Label(master=SCPIframe,textvariable=SCPIresultText)
+SCPIresultLabel.grid(column=1,row=3)
 
 print("scalings....")
 
