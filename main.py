@@ -1,20 +1,25 @@
 from tkinter import messagebox 
+from tkinter import ttk
 try:
     from SCPI import *
 except:
     print("error connecting to device. is a compatible oscilloscope in HID mode connected?")
     messagebox.showerror('SCPI Error', 'Error: Could not initiate SCPI communication. Is a compatible oscilloscope in HID mode connected?')
+from osciclasses import *
+
 from tkinter import *
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import (FigureCanvasTkAgg,
 NavigationToolbar2Tk)
 from fftplot import plotFFT
 from threading import Thread, currentThread
+import os
 
 import numpy as np
 
 
 window= Tk()
+
 
 window.title('SCPI Osci')
 
@@ -81,37 +86,104 @@ def sendSCPI():
         print(res.tobytes().decode('utf-8'))
         SCPIresultText.set(res.tobytes().decode('utf-8'))
     except:
-        print("SCPI send failed: ",SCPIinput.get()) 
+        print("SCPI send failed: ",SCPIinput.get())
+        SCPIresultText.set("SCPI send failed: ", SCPIinput.get())
 
     SCPIinput.delete(0,'end')
 
-on_button=Button (master=window, text="Run...", command=startplotthread)
-on_button.grid(column=1,row=0)
-off_button=Button (master=window, text="Stop", command=stopplotthread)
-off_button.grid(column=2,row=0)
+def toggleChannelA():
+    if(channelAOn)==0:
+        channelAOn.set(1)
+    else:
+        channelAOn.set(0)
+        
+def toggleChannelB():
+    if(channelBOn)==0:
+        channelBOn.set(1)
+    else:
+        channelBOn.set(0)
+
+def quitall():
+    os._exit(0)
+
+controlFrame = LabelFrame(window, text="control")
+controlFrame.grid(column=1, row=0)
+
+on_button=Button (master=controlFrame, text="Run...", command=startplotthread)
+on_button.grid(column=0,row=0)
+off_button=Button (master=controlFrame, text="Stop", command=stopplotthread)
+off_button.grid(column=1,row=0)
+exit_button = Button(master=controlFrame, text="Exit", command=quitall)
+exit_button.grid(row=0, column=2)
 
 SCPIframe = LabelFrame(window, text="SCPI")
-SCPIframe.grid(column=2,row=2)
+SCPIframe.grid(column=1,row=4)
 
 SCPIinput=Entry(master=SCPIframe)
-SCPIinput.grid(column=1,row=1)
+SCPIinput.grid(column=0,row=0)
 sendbutton=Button(master=SCPIframe, text="send command", command=sendSCPI)
-sendbutton.grid(column=2,row=1)
+sendbutton.grid(column=1,row=0)
 SCPIresultText=StringVar()
 SCPIresultLabel = Label(master=SCPIframe,textvariable=SCPIresultText)
-SCPIresultLabel.grid(column=1,row=3)
+SCPIresultLabel.grid(column=0,row=1)
 
-print("scalings....")
+channelAFrame  = LabelFrame(master=window, text="Channel 1")
+channelAFrame.grid(column=1, row=1)
+channelAOn=IntVar()
+channelAActive = Checkbutton(master=channelAFrame, text='active',variable=channelAOn, onvalue=1, offvalue=0, command=toggleChannelA)
+channelAActive.grid(column=0, row=0)
+channelAOffsetLabel=Label(channelAFrame, text="Offset")
+channelAOffsetLabel.grid(row=1, column=0)
+channelAOffset=StringVar()
+channelAOffsetBox=ttk.Combobox(channelAFrame, textvar=channelAOffset, width=25)
+channelAOffsetBox.grid(row=1, column=1)
+channelAScaleLabel=Label(channelAFrame, text="Scale")
+channelAScaleLabel.grid(row=2, column=0)
+channelAScale=StringVar()
+channelAScaleBox=ttk.Combobox(channelAFrame, textvar=channelAScale, width=25)
+channelAScaleBox.grid(row=2, column=1)
+channelACouplingLabel=Label(channelAFrame, text="Coupling")
+channelACouplingLabel.grid(row=3, column=0)
+channelACoupling=StringVar()
+channelACouplingBox=ttk.Combobox(channelAFrame, textvar=channelACoupling, width=25)
+channelACouplingBox.grid(row=3, column=1)
 
-import time
-#while (True):
+
+channelBFrame  = LabelFrame(master=window, text="Channel 2")
+channelBFrame.grid(column=1, row=2)
+channelBOn=IntVar()
+channelBActive = Checkbutton(master=channelBFrame, text='active',variable=channelBOn, onvalue=1, offvalue=0, command=toggleChannelA)
+channelBActive.grid(column=0, row=0)
+channelBOffsetLabel=Label(channelBFrame, text="Offset")
+channelBOffsetLabel.grid(row=1, column=0)
+channelBOffset=StringVar()
+channelBOffsetBox=ttk.Combobox(channelBFrame, textvar=channelBOffset, width=25)
+channelBOffsetBox.grid(row=1, column=1)
+channelBScaleLabel=Label(channelBFrame, text="Scale")
+channelBScaleLabel.grid(row=2, column=0)
+channelBScale=StringVar()
+channelBScaleBox=ttk.Combobox(channelBFrame, textvar=channelBScale, width=25)
+channelBScaleBox.grid(row=2, column=1)
+channelBCouplingLabel=Label(channelBFrame, text="Coupling")
+channelBCouplingLabel.grid(row=3, column=0)
+channelBCoupling=StringVar()
+channelBCouplingBox=ttk.Combobox(channelBFrame, textvar=channelBCoupling, width=25)
+channelBCouplingBox.grid(row=3, column=1)
+
+
+osci=osciDevice()
+
 try:
     scal=getScalings()
     verOff=getOffset()
-#    time.sleep(1)
 except:
-    print("could not get scalings. is a compatible oscilloscope in HID mode connected?")
-    messagebox.showerror('SCPI Error', 'Error: Could not get scalings. Is a compatible oscilloscope in HID mode connected?')
+    errmsg='Error: Could not get scalings. Is a compatible oscilloscope in HID mode connected?'
+    if os.name == 'nt':
+        errmsg=errmsg+' Are you using libusb from libusb.info? If not, copy it to Windows\System32'
+    print(errmsg)
+    messagebox.showerror('SCPI Error', errmsg)
 
+
+window.protocol('WM_DELETE_WINDOW', quitall)
 window.mainloop()
 
