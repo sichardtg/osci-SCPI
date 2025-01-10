@@ -1,10 +1,5 @@
 from tkinter import messagebox 
 from tkinter import ttk
-try:
-    from SCPI import *
-except:
-    print("error connecting to device. is a compatible oscilloscope in HID mode connected?")
-    messagebox.showerror('SCPI Error', 'Error: Could not initiate SCPI communication. Is a compatible oscilloscope in HID mode connected?')
 from osciclasses import *
 
 from tkinter import *
@@ -53,24 +48,32 @@ def plotLive(hordata,data,fig):
 def plots():
     while(1):
         #getScalings()
+        scal=list()
+        scal.append(list())
+        scal.append(1)
+        scal[0].append(1)
         t=currentThread()
         if(getattr(t,"do_run", True)):
-            data=scpi()
-#    [1,2,2,121,21,21,21,51,234,51,51,2,21,51,51]
-            x=np.multiply(list(range(len(data))),scal[0][0]*12/len(data))
-            plotLive(x,np.add(np.multiply(data,scal[1]*0.64),-1.0*verOff), liveFigure)
-            livecanvas.draw()
+            osci.updateData()
+            data=osci.getData()
+            #print(len(data))
+            #print(type(data))
+            #print(data[0])
+            for i in range(len(data)):
+                x=np.multiply(list(range(len(data[i]))),scal[0][0]*12/len(data[i]))
+                plotLive(x,np.add(np.multiply(data[i],scal[1]*0.64),-1.0*verOff), liveFigure)
+                livecanvas.draw()
 
-            plotFFT(data, fftFigure, xscal=scal[0][0])
-            canvas.draw()
+                plotFFT(data[i], fftFigure, xscal=scal[0][0])
+                canvas.draw()
 
 plotthread= Thread(target=plots)
 plotthread.do_run=False
 plotthread.start()
 def startplotthread():
     try:
-        scal=getScalings()
-        verOff=getOffset()    
+        scal=1
+        verOff=0    
         plotthread.do_run=True
     except:
         print("error at on button action.")
@@ -82,7 +85,7 @@ def stopplotthread():
 
 def sendSCPI():
     try:
-        res=send(SCPIinput.get())
+        res=osci.conn.send(SCPIinput.get())
         print(res.tobytes().decode('utf-8'))
         SCPIresultText.set(res.tobytes().decode('utf-8'))
     except:
@@ -93,18 +96,20 @@ def sendSCPI():
 
 def toggleChannelA():
     if(channelAOn)==0:
-        channelAOn.set(1)
+        channelAOn=1
     else:
-        channelAOn.set(0)
+        channelAOn=0
         
 def toggleChannelB():
     if(channelBOn)==0:
-        channelBOn.set(1)
+        channelBOn=1
     else:
-        channelBOn.set(0)
+        channelBOn=0
 
 def quitall():
     os._exit(0)
+
+
 
 controlFrame = LabelFrame(window, text="control")
 controlFrame.grid(column=1, row=0)
@@ -118,7 +123,6 @@ exit_button.grid(row=0, column=2)
 
 SCPIframe = LabelFrame(window, text="SCPI")
 SCPIframe.grid(column=1,row=4)
-
 SCPIinput=Entry(master=SCPIframe)
 SCPIinput.grid(column=0,row=0)
 sendbutton=Button(master=SCPIframe, text="send command", command=sendSCPI)
@@ -173,9 +177,11 @@ channelBCouplingBox.grid(row=3, column=1)
 
 osci=osciDevice()
 
+
+
 try:
-    scal=getScalings()
-    verOff=getOffset()
+    osci.updateSettings()
+    verOff=0#getOffset()
 except:
     errmsg='Error: Could not get scalings. Is a compatible oscilloscope in HID mode connected?'
     if os.name == 'nt':
@@ -183,6 +189,12 @@ except:
     print(errmsg)
     messagebox.showerror('SCPI Error', errmsg)
 
+channelAOn=osci.channels[0].active
+channelAScale.set(osci.channels[0].vertScale.getStr())
+channelAOffset.set("{:.4f}".format(osci.channels[0].offset)+"V")
+channelACoupling.set(osci.channels[0].coupling)
+if(osci.channels[0].active==1):
+    channelAActive.select()
 
 window.protocol('WM_DELETE_WINDOW', quitall)
 window.mainloop()
