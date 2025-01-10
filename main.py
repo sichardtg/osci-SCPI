@@ -22,14 +22,14 @@ window.geometry("900x900")
 
 
 #init FFT fig
-fftFigure= Figure(figsize = (5, 4), 
+fftFigure= Figure(figsize = (6, 4), 
                  dpi = 100) 
 
 canvas= FigureCanvasTkAgg(fftFigure, master=window)
 canvas.draw()
 canvas.get_tk_widget().grid(column=0,row=0,rowspan=9)
 
-liveFigure=Figure(figsize=(5,4), dpi=100)
+liveFigure=Figure(figsize=(6,4), dpi=100)
 livecanvas= FigureCanvasTkAgg(liveFigure, master=window)
 livecanvas.draw()
 livecanvas.get_tk_widget().grid(column=0,row=10,rowspan=9)
@@ -38,7 +38,7 @@ livecanvas.get_tk_widget().grid(column=0,row=10,rowspan=9)
 
 def plotLive(hordata,data,fig):
     fig.clf()
-    p=fig.add_axes([0.1, 0.1, 0.8, 0.8])
+    p=fig.add_axes([0.13, 0.13, 0.8, 0.8])
     p.set_title("Live")
     p.plot(hordata,data)
     p.set_xlabel("s")
@@ -48,10 +48,6 @@ def plotLive(hordata,data,fig):
 def plots():
     while(1):
         #getScalings()
-        scal=list()
-        scal.append(list())
-        scal.append(1)
-        scal[0].append(1)
         t=currentThread()
         if(getattr(t,"do_run", True)):
             osci.updateData()
@@ -60,11 +56,11 @@ def plots():
             #print(type(data))
             #print(data[0])
             for i in range(len(data)):
-                x=np.multiply(list(range(len(data[i]))),scal[0][0]*12/len(data[i]))
-                plotLive(x,np.add(np.multiply(data[i],scal[1]*0.64),-1.0*verOff), liveFigure)
+                x=np.multiply(list(range(len(data[i]))),osci.timescale.getNumeric()*12/len(data[i]))
+                plotLive(x,np.add(np.multiply(data[i],osci.channels[i].vertScale.getNumeric()*0.64),-1.0*osci.channels[i].offset*osci.channels[i].vertScale.getNumeric()), liveFigure)
                 livecanvas.draw()
 
-                plotFFT(data[i], fftFigure, xscal=scal[0][0])
+                plotFFT(data[i], fftFigure, xscal=osci.timescale.getNumeric())
                 canvas.draw()
 
 plotthread= Thread(target=plots)
@@ -72,8 +68,6 @@ plotthread.do_run=False
 plotthread.start()
 def startplotthread():
     try:
-        scal=1
-        verOff=0    
         plotthread.do_run=True
     except:
         print("error at on button action.")
@@ -122,7 +116,7 @@ exit_button = Button(master=controlFrame, text="Exit", command=quitall)
 exit_button.grid(row=0, column=2)
 
 SCPIframe = LabelFrame(window, text="SCPI")
-SCPIframe.grid(column=1,row=4)
+SCPIframe.grid(column=1,row=6)
 SCPIinput=Entry(master=SCPIframe)
 SCPIinput.grid(column=0,row=0)
 sendbutton=Button(master=SCPIframe, text="send command", command=sendSCPI)
@@ -174,20 +168,33 @@ channelBCoupling=StringVar()
 channelBCouplingBox=ttk.Combobox(channelBFrame, textvar=channelBCoupling, width=25)
 channelBCouplingBox.grid(row=3, column=1)
 
+horizontalFrame  = LabelFrame(master=window, text="Horizontal")
+horizontalFrame.grid(column=1, row=4)
+horizontalScaleLabel=Label(horizontalFrame, text="timescale")
+horizontalScaleLabel.grid(row=0,column=0)
+horizontalScaleStr=StringVar()
+horizontalScaleBox=ttk.Combobox(horizontalFrame, textvar=horizontalScaleStr, width=25)
+horizontalScaleBox.grid(row=0, column=1)
+
+
+triggerFrame  = LabelFrame(master=window, text="Trigger")
+triggerFrame.grid(column=1, row=5)
+triggerSourceLabel=Label(triggerFrame, text="Source")
+triggerSourceLabel.grid(row=0, column=0)
+
 
 osci=osciDevice()
 
 
 
-try:
-    osci.updateSettings()
-    verOff=0#getOffset()
-except:
-    errmsg='Error: Could not get scalings. Is a compatible oscilloscope in HID mode connected?'
-    if os.name == 'nt':
-        errmsg=errmsg+' Are you using libusb from libusb.info? If not, copy it to Windows\System32'
-    print(errmsg)
-    messagebox.showerror('SCPI Error', errmsg)
+#try:
+osci.updateSettings()
+#except:
+#    errmsg='Error: Could not get scalings. Is a compatible oscilloscope in HID mode connected?'
+#    if os.name == 'nt':
+#        errmsg=errmsg+' Are you using libusb from libusb.info? If not, copy it to Windows\System32'
+#    print(errmsg)
+#    messagebox.showerror('SCPI Error', errmsg)
 
 channelAOn=osci.channels[0].active
 channelAScale.set(osci.channels[0].vertScale.getStr())
@@ -195,6 +202,8 @@ channelAOffset.set("{:.4f}".format(osci.channels[0].offset)+"V")
 channelACoupling.set(osci.channels[0].coupling)
 if(osci.channels[0].active==1):
     channelAActive.select()
+
+horizontalScaleStr.set(osci.timescale.getStr())
 
 window.protocol('WM_DELETE_WINDOW', quitall)
 window.mainloop()

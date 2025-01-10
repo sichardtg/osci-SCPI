@@ -131,7 +131,7 @@ class timeScale:
     numeric=1
     string="1 s"
 
-    def __init__():
+    def __init__(self):
         return
 
     def getNumeric(self):
@@ -149,7 +149,7 @@ class timeScale:
             self.numeric=float(scalStr[:-2])
         else:
             self.numeric=float(scalStr[:-3])*unit
-        self.string=scalStr
+        self.string=scalStr.strip()
 
 class osciDevice:
     channels=list()
@@ -167,6 +167,7 @@ class osciDevice:
         self.channels.append(osciChannel())
         #self.channels.append(osciChannel(ChId=2))
         self.conn=SCPI.SCPIconnector(self.idVendor, self.idProduct,self.endPointOut, self.endPointIn)
+        self.timescale=timeScale()
 
     def addChannel(self):
         self.channels.append(osciChannel())
@@ -175,25 +176,13 @@ class osciDevice:
         self.availableScales=list()
         return
 
-    def getHorScaling(self):
-        self.conn.reset()
-        res=self.conn.send(':HORizontal:SCALe?')
-        scalStr=res.tobytes().decode('utf-8')
-        unit=calcScalPrefactor(scalStr[-3])
-        if(unit==1):
-            scal=float(scalStr[:-2])
-        else:
-            scal=float(scalStr[:-3])*unit
-        print("scal... ", scal, "unit...", unit)#, scal2, scal3, scal4)
-        return scal, scalStr
-
 
     def updateSettings(self):
         for ch in self.channels:
             ch.updateSettingsFromSCPI(self.conn)
         self.trigger.updateFromSCPI(self.conn)
         self.getScalesFromSCPI()
-        self.getHorScaling()        
+        self.timescale.updateFromSCPI(self.conn)        
 
     def updateData(self):
         #print("fetching data...")

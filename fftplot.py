@@ -5,13 +5,13 @@ import numpy as np
 
 def plotFFT(data, fig, xscal=1):
     fig.clf()
-    p=fig.add_axes([0.1, 0.1, 0.8, 0.8])
+    p=fig.add_axes([0.13, 0.13, 0.8, 0.8])
 #    p.set_title("FFT")
     transf=np.abs(fft.rfft(data))
     
     fscaler=0.5/(xscal*2*np.pi) 
 
-    maxv=max(transf)
+    maxv=max(transf[1:])
     maxf=np.where(transf==maxv)[0][0]*fscaler
 
     p.set_title("FFT, fmax="+str(maxf)+" Hz")
